@@ -1,3 +1,5 @@
+package frc.robot.subsystems;
+
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -5,8 +7,8 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.ProfiledPIDSubsystem;
-import frc.robot.Constants.PivotConstants;
 import frc.robot.Constants.CANIDConstants;
+import frc.robot.Constants.PivotConstants;
 
 public class PivotSubsystem extends ProfiledPIDSubsystem {
   private final CANSparkMax motor = new CANSparkMax(CANIDConstants.ARM_PIVOT, MotorType.kBrushless);

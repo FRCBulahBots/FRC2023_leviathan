@@ -1,10 +1,8 @@
+package frc.robot.subsystems;
+
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.ProfiledPIDSubsystem;
@@ -43,6 +41,6 @@ public class GrabberSubsystem extends ProfiledPIDSubsystem {
 
   @Override
   public double getMeasurement() {
-    return motor.getSelectedSensorPosition();;
+    return motor.getSelectedSensorPosition();
   }
 }
