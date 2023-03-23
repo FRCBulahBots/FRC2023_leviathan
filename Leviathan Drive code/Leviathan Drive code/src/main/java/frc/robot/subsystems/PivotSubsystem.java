@@ -33,7 +33,7 @@ public class PivotSubsystem extends ProfiledPIDSubsystem {
 
   @Override
   public void useOutput(double output, TrapezoidProfile.State setpoint) {
-    // Add the feedforward to the PID output to get the motor output
+    // TODO: Add a feedforward to the PID output potentially
     motor.set(output);
   }
 
