@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.CANIDConstants;
 import frc.robot.Constants.DriveTrainConstants;
 
-public class Drivetrain extends SubsystemBase {
+public class DrivetrainSubsystem extends SubsystemBase {
 
   // Instances of Falcons, our Drivesystem, and the Pigeon Gyro:
   public static WPI_TalonFX rightMaster = new WPI_TalonFX(CANIDConstants.DRIVE_RIGHT_MASTER);
@@ -22,7 +22,7 @@ public class Drivetrain extends SubsystemBase {
 
   private static Pigeon2 pigeonGyro = new Pigeon2(CANIDConstants.GYRO);
 
-  public Drivetrain() {
+  public DrivetrainSubsystem() {
 
     leftMaster.configFactoryDefault();
     leftFollower.configFactoryDefault();

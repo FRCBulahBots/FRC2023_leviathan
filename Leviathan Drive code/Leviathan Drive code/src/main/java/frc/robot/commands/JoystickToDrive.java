@@ -10,22 +10,23 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.subsystems.Drivetrain;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.subsystems.DrivetrainSubsystem;
 
 //A simple drive command for... ya know, driving.
 public class JoystickToDrive extends CommandBase {
   @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
-  private final Drivetrain drive;
+  private final DrivetrainSubsystem drive;
   private double move;
   private double turn;
-  private final Joystick joyStick;
+  private final CommandXboxController m_driverController;
   private final int axis1;
   private final int axis2;
 
   
-  public JoystickToDrive(Drivetrain drive, Joystick joyStick, int axis1, int axis2) {
+  public JoystickToDrive(DrivetrainSubsystem drive, CommandXboxController m_driverController, int axis1, int axis2) {
     this.drive = drive;
-    this.joyStick = joyStick;
+    this.m_driverController = m_driverController;
     this.axis1 = axis1;
     this.axis2 = axis2;
 
