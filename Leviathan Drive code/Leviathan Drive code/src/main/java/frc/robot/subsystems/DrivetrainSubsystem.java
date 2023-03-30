@@ -17,8 +17,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
   public static WPI_TalonFX leftFollower = new WPI_TalonFX(CANIDConstants.DRIVE_LEFT_FOLLOWER);
   public static WPI_TalonFX rightFollower = new WPI_TalonFX(CANIDConstants.DRIVE_RIGHT_FOLLOWER);
-
-  private DifferentialDrive drive = new DifferentialDrive(leftMaster, rightMaster);
+  private NeutralMode mode;
+  private DifferentialDrive drive = new DifferentialDrive(rightMaster, leftMaster);
 
   private static Pigeon2 pigeonGyro = new Pigeon2(CANIDConstants.GYRO);
 
@@ -43,15 +43,26 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     // make sure we coast.
     setDriveType(NeutralMode.Coast);
-
   }
 
   // Method to quickly switch drivetypes from coast to brake, and vice versa:
-  public static void setDriveType(NeutralMode driveMode) {
+  public void setDriveType(NeutralMode driveMode) {
+    mode = driveMode;
     leftMaster.setNeutralMode(driveMode);
     rightMaster.setNeutralMode(driveMode);
-    leftFollower.setNeutralMode(driveMode);
-    rightFollower.setNeutralMode(driveMode);
+    // leftFollower.setNeutralMode(driveMode);
+    // rightFollower.setNeutralMode(driveMode);
+  }
+
+  public void invertDriveType(){
+    if(mode == NeutralMode.Coast)
+      setDriveType(NeutralMode.Brake);
+    else
+      setDriveType(NeutralMode.Coast);
+  }
+
+  public double getPitch(){
+    return Math.IEEEremainder(pigeonGyro.getPitch(), 360);
   }
 
   // Main driving method: a simple DifferentialDrive encapsulated method

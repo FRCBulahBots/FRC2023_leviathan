@@ -8,7 +8,6 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.DrivetrainSubsystem;
@@ -38,8 +37,8 @@ public class JoystickToDrive extends CommandBase {
     if (DriverStation.isAutonomous()){
       return;
     }
-    move = -joyStick.getRawAxis(axis1);
-    turn = -joyStick.getRawAxis(axis2);
+    move = -m_driverController.getRawAxis(axis1);
+    turn = -m_driverController.getRawAxis(axis2);
     drive.arcadeDrive(-move, -turn);
   }
 
