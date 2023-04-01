@@ -45,6 +45,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
     setDriveType(NeutralMode.Coast);
   }
 
+  public void setDriveMax(double maxValue){
+    drive.setMaxOutput(maxValue);
+  }
+
   // Method to quickly switch drivetypes from coast to brake, and vice versa:
   public void setDriveType(NeutralMode driveMode) {
     mode = driveMode;

@@ -37,6 +37,17 @@ public class ExtendSubsystem extends ProfiledPIDSubsystem {
     // need a real encoder on the pivot point before this.
     // setGoal(ArmConstants.kArmOffsetRads);
   }
+  // @Override
+  // public void periodic() {
+  //   SmartDashboard.putNumber("Extend Encoder Value", motor.getEncoder().getPosition());
+  // }
+
+  // @Override
+  // public void periodic() {
+  //     // TODO Auto-generated method stub
+  //     super.periodic();
+  //     SmartDashboard.putNumber("Extend Encoder Value", motor.getEncoder().getPosition()); 
+  // }
 
   @Override
   public void useOutput(double output, TrapezoidProfile.State setpoint) {

@@ -39,7 +39,7 @@ public class JoystickToDrive extends CommandBase {
     }
     move = -m_driverController.getRawAxis(axis1);
     turn = -m_driverController.getRawAxis(axis2);
-    drive.arcadeDrive(-move, -turn);
+    drive.arcadeDrive(-move, turn);
   }
 
 }

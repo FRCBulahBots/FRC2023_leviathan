@@ -34,6 +34,7 @@ public class GrabberSubsystem extends ProfiledPIDSubsystem {
     // setGoal(GrabberConstants.kArmOffsetRads);
   }
 
+
   @Override
   public void useOutput(double output, TrapezoidProfile.State setpoint) {
     // TODO: Add a feedforward to the PID output potentially

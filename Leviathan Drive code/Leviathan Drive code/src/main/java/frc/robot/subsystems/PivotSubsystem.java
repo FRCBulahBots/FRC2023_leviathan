@@ -6,12 +6,14 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.ProfiledPIDSubsystem;
 import frc.robot.Constants.CANIDConstants;
 import frc.robot.Constants.PivotConstants;
 
 public class PivotSubsystem extends ProfiledPIDSubsystem {
   private final CANSparkMax motor = new CANSparkMax(CANIDConstants.ARM_PIVOT, MotorType.kBrushless);
+  double squaredOutput, finalOutput;
 
   public PivotSubsystem() {
     // We MUST call the super to supply the configured ProfiledPIDController to the base class.
@@ -33,14 +35,34 @@ public class PivotSubsystem extends ProfiledPIDSubsystem {
     //setGoal(ArmConstants.kArmOffsetRads);
   }
 
+ 
+
   @Override
   public void useOutput(double output, TrapezoidProfile.State setpoint) {
-    // TODO: Add a feedforward to the PID output potentially
+
+    //exponential output for the arm
+    squaredOutput = Math.pow(output, 2);
+    if (output < 0){
+      squaredOutput = -squaredOutput;
+    }
+    finalOutput = clamp(squaredOutput,-.5,.5);
+    
     motor.set(output);
+
+    // motor.set(output);
+
+    SmartDashboard.putNumber("Pivot Motor Output", motor.get());
+    SmartDashboard.putNumber("Pivot Encoder Value", motor.getEncoder().getPosition());
+
   }
 
   @Override
   public double getMeasurement() {
-    return motor.getEncoder().getPosition();
+    double pivotPosition = motor.getEncoder().getPosition();
+    return pivotPosition;
+  }
+
+  private static double clamp(double val, double min, double max) {
+    return Math.max(min, Math.min(max, val));
   }
 }
