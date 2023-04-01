@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
@@ -34,11 +36,6 @@ import frc.robot.subsystems.PivotSubsystem;
 public class Robot extends TimedRobot {
   private double startTime;
 
-  private DrivetrainSubsystem drive = new DrivetrainSubsystem();
-  private IntakeSubsystem intake = new IntakeSubsystem();
-  private PivotSubsystem pivot = new PivotSubsystem();
-  private ExtendSubsystem extend = new ExtendSubsystem();
-
   private SerialPort arduino; //The serial port that we try to communicate with
   private Timer timer; //The timer to keep track of when we send our signal to the Arduino
 
@@ -46,7 +43,7 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> colorChooser = new SendableChooser<>();
 
   private Command m_autonomousCommand;
-  private RobotContainer m_robotContainer;
+  private RobotContainer robotContainer;
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -63,35 +60,37 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our
     // autonomous chooser on the dashboard.
-    m_robotContainer = new RobotContainer();
+    robotContainer = new RobotContainer();
+
+    
     //A "Capture Try/Catch". Tries all the possible serial port
     //connections that make sense if you're using the USB ports
     //on the RoboRIO. It keeps trying unless it never finds anything.
-    try {
-      arduino = new SerialPort(9600, SerialPort.Port.kUSB);
-      System.out.println("Connected on kUSB!");
-    } catch (Exception e) {
-      System.out.println("Failed to connect on kUSB, trying kUSB 1");
+    // try {
+    //   arduino = new SerialPort(9600, SerialPort.Port.kUSB);
+    //   System.out.println("Connected on kUSB!");
+    // } catch (Exception e) {
+    //   System.out.println("Failed to connect on kUSB, trying kUSB 1");
 
-      try {
-        arduino = new SerialPort(9600, SerialPort.Port.kUSB1);
-        System.out.println("Connected on kUSB1!");
-      } catch (Exception e1) {
-        System.out.println("Failed to connect on kUSB1, trying kUSB 2");
+    //   try {
+    //     arduino = new SerialPort(9600, SerialPort.Port.kUSB1);
+    //     System.out.println("Connected on kUSB1!");
+    //   } catch (Exception e1) {
+    //     System.out.println("Failed to connect on kUSB1, trying kUSB 2");
 
-        try {
-          arduino = new SerialPort(9600, SerialPort.Port.kUSB2);
-          System.out.println("Connected on kUSB2!");
-        } catch (Exception e2) {
-          System.out.println("Failed to connect on kUSB2, all connection attempts failed!");
-        }
-      }
-    }
+    //     try {
+    //     arduino = new SerialPort(9600, SerialPort.Port.kUSB2);
+    //       System.out.println("Connected on kUSB2!");
+    //     } catch (Exception e2) {
+    //       System.out.println("Failed to connect on kUSB2, all connection attempts failed!");
+    //     }
+    //   }
+    // }
 
-    //Create a timer that will be used to keep track of when we should send
-    //a signal and start it. 
-    timer = new Timer();
-    timer.start();
+    // //Create a timer that will be used to keep track of when we should send
+    // //a signal and start it. 
+    // timer = new Timer();
+    // timer.start();
   }
 
   /**
@@ -108,16 +107,16 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     //If more than 5 seconds has passed
     colorSelected = colorChooser.getSelected();
-    if(timer.get() > 5) {
-      //Output that we wrote to the arduino, write our "trigger byte"
-      //to the arduino and reset the timer for next time
-      System.out.println("Wrote to Arduino");
-      arduino.writeString(colorSelected);
-      timer.reset();
-      if(arduino.getBytesReceived() > 0) {
-        System.out.print(arduino.readString());
-      }
-    }
+    // if(timer.get() > 10) {
+    //   //Output that we wrote to the arduino, write our "trigger byte"
+    //   //to the arduino and reset the timer for next time
+    //   //System.out.println("Wrote to Arduino");
+    //   //this.arduino.writeString(colorSelected);
+    //   // timer.reset();
+    //   // if(this.arduino.getBytesReceived() > 0) {
+    //   //   System.out.print(this.arduino.readString());
+    //   // }
+    // }
     // Runs the Scheduler. This is responsible for polling buttons, adding
     // newly-scheduled
     // commands, running already-scheduled commands, removing finished or
@@ -143,46 +142,26 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    // m_autonomousCommand = robotContainer.getAutonomousCommand();
     startTime = Timer.getFPGATimestamp();
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
+    // // schedule the autonomous command (example)
+    // if (m_autonomousCommand != null) {
+    //   m_autonomousCommand.schedule();
+    // }
+    
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
     double time = Timer.getFPGATimestamp();
-    if (time - startTime < 1) {
-      Commands.runOnce(
-          () -> {
-            pivot.setGoal(PivotConstants.highNode);
-            pivot.enable();
-          },
-          pivot);
-    } else if (time - startTime > 1 && time - startTime < 3) {
-      Commands.runOnce(
-          () -> {
-            pivot.setGoal(PivotConstants.highNode);
-            pivot.enable();
-          },
-          pivot);
-      Commands.runOnce(
-          () -> {
-            extend.setGoal(ExtendConstants.out);
-            extend.enable();
-          },
-          extend);
-    } else if (time - startTime > 3 && time - startTime < 4) {
-      new InstantCommand(() -> intake.setSpeed(IntakeConstants.OUT_SPEED));
-    } else if (time - startTime > 4 && time - startTime < 6) {
-      new InstantCommand(() -> intake.setSpeed(IntakeConstants.STOP_SPEED));
-      drive.arcadeDrive(-.6, 0);
-    } else {
-      drive.arcadeDrive(0, 0);
-    }
+  /* 
+  if (time - startTime < 2) {
+    robotContainer.drive.arcadeDrive(.6, 0);
+  } else {
+    robotContainer.drive.arcadeDrive(0, 0);
+  }
+  */
   }
 
   @Override
@@ -191,6 +170,7 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+    robotContainer.drive.setDriveType(NeutralMode.Coast);
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
