@@ -4,11 +4,19 @@
 
 package frc.robot;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.nio.ByteBuffer;
+
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.I2C.Port;
+import edu.wpi.first.wpilibj.SerialPort.Parity;
+import edu.wpi.first.wpilibj.SerialPort.StopBits;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -34,14 +42,18 @@ import frc.robot.subsystems.PivotSubsystem;
  * project.
  */
 public class Robot extends TimedRobot {
-  private double startTime;
+  private SerialPort arduino;
+  private Timer timer;
 
-  private SerialPort arduino; //The serial port that we try to communicate with
-  private Timer timer; //The timer to keep track of when we send our signal to the Arduino
-
-  private String colorSelected;
-  private final SendableChooser<String> colorChooser = new SendableChooser<>();
-
+  private byte[] colorSelected;
+  private SendableChooser<byte[]> colorChooser = new SendableChooser<>();
+  private byte[] Startup = {0x0};
+  private byte[] BlueAlliance = {0x1};
+  private byte[] RedAlliance = {0x2};
+  private byte[] Cone = {0x3};
+  private byte[] Cube = {0x4};
+  private byte[] RGB = {0x5};
+  
   private Command m_autonomousCommand;
   private RobotContainer robotContainer;
 
@@ -52,79 +64,36 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    colorChooser.setDefaultOption("Blue", "blue");
-    colorChooser.addOption("Red", "red");
-    colorChooser.addOption("Yellow", "yellow");
-    colorChooser.addOption("Purple", "purple");
-    SmartDashboard.putData("Color Choices", colorChooser);
-    // Instantiate our RobotContainer. This will perform all our button bindings,
-    // and put our
-    // autonomous chooser on the dashboard.
-    robotContainer = new RobotContainer();
-
-    
-    //A "Capture Try/Catch". Tries all the possible serial port
-    //connections that make sense if you're using the USB ports
-    //on the RoboRIO. It keeps trying unless it never finds anything.
-    // try {
-    //   arduino = new SerialPort(9600, SerialPort.Port.kUSB);
-    //   System.out.println("Connected on kUSB!");
-    // } catch (Exception e) {
-    //   System.out.println("Failed to connect on kUSB, trying kUSB 1");
-
-    //   try {
-    //     arduino = new SerialPort(9600, SerialPort.Port.kUSB1);
-    //     System.out.println("Connected on kUSB1!");
-    //   } catch (Exception e1) {
-    //     System.out.println("Failed to connect on kUSB1, trying kUSB 2");
-
-    //     try {
-    //     arduino = new SerialPort(9600, SerialPort.Port.kUSB2);
-    //       System.out.println("Connected on kUSB2!");
-    //     } catch (Exception e2) {
-    //       System.out.println("Failed to connect on kUSB2, all connection attempts failed!");
-    //     }
-    //   }
-    // }
-
-    // //Create a timer that will be used to keep track of when we should send
-    // //a signal and start it. 
-    // timer = new Timer();
-    // timer.start();
+    colorChooser.setDefaultOption("Startup", Startup);
+    colorChooser.addOption("Blue Alliance", BlueAlliance);
+    colorChooser.addOption("Red Alliance", RedAlliance);
+    colorChooser.addOption("Cone", Cone);
+    colorChooser.addOption("Cube", Cube);
+    colorChooser.addOption("RGB", RGB);
+    SmartDashboard.putData(colorChooser);
+    try {
+      arduino = new SerialPort(9600, SerialPort.Port.kUSB);
+      System.out.println("Connected!");
+    } catch (Exception e) {
+      System.out.println("Failed poopy poop");
+    }
+    timer = new Timer();
+    timer.start();
+    //arduino.write(Startup, 1);
   }
 
-  /**
-   * This function is called every 20 ms, no matter the mode. Use this for items
-   * like diagnostics
-   * that you want ran during disabled, autonomous, teleoperated and test.
-   *
-   * <p>
-   * This runs after the mode specific periodic functions, but before LiveWindow
-   * and
-   * SmartDashboard integrated updating.
-   */
   @Override
   public void robotPeriodic() {
-    //If more than 5 seconds has passed
     colorSelected = colorChooser.getSelected();
-    // if(timer.get() > 10) {
-    //   //Output that we wrote to the arduino, write our "trigger byte"
-    //   //to the arduino and reset the timer for next time
-    //   //System.out.println("Wrote to Arduino");
-    //   //this.arduino.writeString(colorSelected);
-    //   // timer.reset();
-    //   // if(this.arduino.getBytesReceived() > 0) {
-    //   //   System.out.print(this.arduino.readString());
-    //   // }
-    // }
-    // Runs the Scheduler. This is responsible for polling buttons, adding
-    // newly-scheduled
-    // commands, running already-scheduled commands, removing finished or
-    // interrupted commands,
-    // and running subsystem periodic() methods. This must be called from the
-    // robot's periodic
-    // block in order for anything in the Command-based framework to work.
-    CommandScheduler.getInstance().run();
+    if(timer.get() > .5){
+      System.out.println("Wrote to Arduino");
+      arduino.write(colorSelected, 1);
+      if(arduino.getBytesReceived() > 0){
+        System.out.println(colorSelected);
+      }
+      timer.reset();
+    }
+CommandScheduler.getInstance().run();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -142,38 +111,30 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    // m_autonomousCommand = robotContainer.getAutonomousCommand();
-    startTime = Timer.getFPGATimestamp();
-    // // schedule the autonomous command (example)
-    // if (m_autonomousCommand != null) {
-    //   m_autonomousCommand.schedule();
-    // }
-    
+    m_autonomousCommand = robotContainer.getAutonomousCommand();
+
+    // schedule the autonomous command (example)
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
+    }
+
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    double time = Timer.getFPGATimestamp();
-  /* 
-  if (time - startTime < 2) {
-    robotContainer.drive.arcadeDrive(.6, 0);
-  } else {
-    robotContainer.drive.arcadeDrive(0, 0);
-  }
-  */
   }
 
   @Override
   public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
-    robotContainer.drive.setDriveType(NeutralMode.Coast);
+
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    // A "Capture Try/Catch". Tries all the possible serial port
+    // connections that make sense if you're using the USB ports
+    // on the RoboRIO. It keeps trying unless it never finds anything.
   }
 
   /** This function is called periodically during operator control. */
@@ -202,4 +163,3 @@ public class Robot extends TimedRobot {
   public void simulationPeriodic() {
   }
 }
-

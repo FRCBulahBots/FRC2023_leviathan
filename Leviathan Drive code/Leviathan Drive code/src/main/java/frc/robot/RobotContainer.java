@@ -7,13 +7,17 @@ package frc.robot;
 import frc.robot.Constants.ExtendConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.PivotConstants;
-import frc.robot.commands.Auton;
+import frc.robot.commands.ConeMobility;
 import frc.robot.commands.JoystickToDrive;
+import frc.robot.commands.JoystickToDriveGyro;
 import frc.robot.subsystems.DrivetrainSubsystem;
 import frc.robot.subsystems.ExtendSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.PivotSubsystem;
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.shuffleboard.SendableCameraWrapper;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -38,14 +42,24 @@ public class RobotContainer {
   public final ExtendSubsystem extend = new ExtendSubsystem();
   public final IntakeSubsystem intake = new IntakeSubsystem();
   public final DrivetrainSubsystem drive = new DrivetrainSubsystem();
+  private final Command ConeMobilityCommand = new ConeMobility(intake, drive, extend, pivot);
+  private final Command ConeCommand = new ConeMobility(intake, drive, extend, pivot);
+  private final Command NothingCommand = null;
 
+  SendableChooser<Command> autoChooser = new SendableChooser<>();
+  
+  
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController = new CommandXboxController(0);
-
+  
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
+    autoChooser.setDefaultOption("Cone + Mobility", ConeMobilityCommand);
+    autoChooser.addOption("Cone", ConeCommand);
+    autoChooser.addOption("Nothing", NothingCommand);
+    SmartDashboard.putData(autoChooser);
     // Configure the trigger bindings
     configureBindings();
   }
@@ -112,30 +126,6 @@ public class RobotContainer {
                             },
                             extend))));
 
-    // Commands.runOnce(
-    // () -> {
-    // pivot.setGoal(PivotConstants.lowNode);
-    // pivot.enable();
-    // },
-    // pivot)
-
-    // Commands.runOnce(
-    // () -> {
-    // extend.setGoal(ExtendConstants.in);
-    // extend.enable();
-    // },
-    // extend);
-
-    // m_driverController
-    // .b()
-    // .onTrue(
-    // Commands.runOnce(
-    // () -> {
-    // pivot.setGoal(PivotConstants.substation);
-    // pivot.enable();
-    // },
-    // pivot));
-
     //Middle node pivot and extend
     m_driverController
         .x()
@@ -193,6 +183,8 @@ public class RobotContainer {
                 },
                 extend));
 
+      m_driverController.povRight().onTrue(new JoystickToDriveGyro(drive.getYaw() - 90, drive));
+      m_driverController.povLeft().onTrue(new JoystickToDriveGyro(drive.getYaw() + 90, drive));
     // Grabber Commands
     m_driverController.leftTrigger()
         .onTrue(new InstantCommand(() -> intake.setSpeed(IntakeConstants.OUT_SPEED)))
@@ -211,6 +203,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return new Auton(intake, drive, extend, pivot);
+    return autoChooser.getSelected();
   }
 }

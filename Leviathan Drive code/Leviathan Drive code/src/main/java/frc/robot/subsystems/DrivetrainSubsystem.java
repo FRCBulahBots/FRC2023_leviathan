@@ -20,6 +20,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
   private NeutralMode mode;
   private DifferentialDrive drive = new DifferentialDrive(rightMaster, leftMaster);
 
+  private Pigeon2 gyro = new Pigeon2(CANIDConstants.GYRO);
+
   private static Pigeon2 pigeonGyro = new Pigeon2(CANIDConstants.GYRO);
 
   public DrivetrainSubsystem() {
@@ -43,6 +45,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     // make sure we coast.
     setDriveType(NeutralMode.Coast);
+
+
   }
 
   public void setDriveMax(double maxValue){
@@ -54,8 +58,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
     mode = driveMode;
     leftMaster.setNeutralMode(driveMode);
     rightMaster.setNeutralMode(driveMode);
-    // leftFollower.setNeutralMode(driveMode);
-    // rightFollower.setNeutralMode(driveMode);
+    leftFollower.setNeutralMode(driveMode);
+    rightFollower.setNeutralMode(driveMode);
   }
 
   public void invertDriveType(){
@@ -63,20 +67,52 @@ public class DrivetrainSubsystem extends SubsystemBase {
       setDriveType(NeutralMode.Brake);
     else
       setDriveType(NeutralMode.Coast);
+      
+    }
+
+    public double getYaw(){
+      return pigeonGyro.getYaw();
+    }
+
+  public double getTilt(){
+    return Math.IEEEremainder(getPitch(), 360);
   }
+  
 
   public double getPitch(){
-    return Math.IEEEremainder(pigeonGyro.getPitch(), 360);
+    return pigeonGyro.getPitch();
   }
 
+  public double getHeading(){
+    return Math.IEEEremainder(getYaw(), 360);
+  }
+
+
   // Main driving method: a simple DifferentialDrive encapsulated method
-  public void arcadeDrive(double speed, double rotation) {
+  public void arcadeDrive(double speed, double rotation) {    
     drive.arcadeDrive(DriveTrainConstants.FWD_REV_MULT * speed, rotation * DriveTrainConstants.ROT_MULT);
   }
 
+
+
+  public double getDriveEncodersAverage(){
+    return (leftMaster.getSelectedSensorPosition() + rightMaster.getSelectedSensorPosition()) / 2;
+  }
+
+  public void neutralOutputAll(){
+    leftMaster.neutralOutput();
+    leftFollower.neutralOutput();
+    rightMaster.neutralOutput();
+    rightFollower.neutralOutput();
+  }
+
+
+
   @Override
   public void periodic() {
-    // SmartDashboard.putNumber("GyroData", pigeonGyro.getYaw());
+    SmartDashboard.putNumber("Gyro Raw Data", getHeading());
+    //SmartDashboard.putNumber("Gyro Heading", getHeading());
+    SmartDashboard.putBoolean("Is drive on brake?", mode == NeutralMode.Brake);
   }
 
 }

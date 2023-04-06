@@ -18,16 +18,12 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 
-public class Auton extends SequentialCommandGroup {
-    private IntakeSubsystem intake;
-    private ExtendSubsystem extend;
-    private DrivetrainSubsystem drive;
-    private PivotSubsystem pivot;
-    // private double timer;
+public class ConeMobility extends SequentialCommandGroup {
+    public ConeMobility(IntakeSubsystem intake, DrivetrainSubsystem drive, ExtendSubsystem extend, PivotSubsystem pivot) {
+        // addCommands(new RunCommand(() -> drive.arcadeDrive(0.6, 0),
+        // drive).withTimeout(2));
 
-    public Auton(IntakeSubsystem intake, DrivetrainSubsystem drive, ExtendSubsystem extend, PivotSubsystem pivot) {
-
-        addCommands(Commands.runOnce(
+        addCommands(new InstantCommand(() -> drive.setDriveType(NeutralMode.Brake)), Commands.runOnce(
                 () -> {
                     pivot.setGoal(PivotConstants.middleNode);
                     pivot.enable();
@@ -35,28 +31,32 @@ public class Auton extends SequentialCommandGroup {
                 pivot).alongWith(
                         new SequentialCommandGroup(new WaitCommand(.6),
                                 Commands.runOnce(
-                                        () -> {
+                                    () -> {
                                             extend.setGoal(ExtendConstants.out);
                                             extend.enable();
                                         },
                                         extend))),
-                new WaitCommand(1.4),
-                new InstantCommand(() -> intake.setSpeed(IntakeConstants.IN_SPEED)).withTimeout(2),
+                new WaitCommand(1.7),
+                new RunCommand(() -> intake.setSpeed(IntakeConstants.IN_SPEED)).withTimeout(2),
                 new InstantCommand(() -> intake.setSpeed(IntakeConstants.STOP_SPEED)),
-                new ParallelCommandGroup(new RunCommand(() -> drive.arcadeDrive(0.6, 0), drive).withTimeout(2)),
-                Commands.runOnce(
-                        () -> {
-                            extend.setGoal(ExtendConstants.in);
-                            extend.enable();
-                        },
-                        extend).alongWith(
-                                new SequentialCommandGroup(new WaitCommand(0.6),
-                                        Commands.runOnce(
-                                                () -> {
-                                                    pivot.setGoal(PivotConstants.lowNode);
-                                                    pivot.enable();
-                                                },
-                                                pivot))));
+                new WaitCommand(1),
+                new ParallelCommandGroup(
+                        Commands.runOnce(
+                                () -> {
+                                    extend.setGoal(ExtendConstants.in);
+                                    extend.enable();
+                                },
+                                extend).alongWith(
+                                        new SequentialCommandGroup(new WaitCommand(2),
+                                                Commands.runOnce(
+                                                        () -> {
+                                                            pivot.setGoal(PivotConstants.lowNode);
+                                                            pivot.enable();
+                                                        },
+                                                        pivot)
+                                                        .andThen(new RunCommand(() -> drive.arcadeDrive(0.7, 0), drive)
+                                                                .withTimeout(2).andThen(new InstantCommand(() -> drive
+                                                                        .setDriveType(NeutralMode.Coast))))))));
 
         // this.robotContainer = robotContainer;
         // timer = Timer.getFPGATimestamp();
