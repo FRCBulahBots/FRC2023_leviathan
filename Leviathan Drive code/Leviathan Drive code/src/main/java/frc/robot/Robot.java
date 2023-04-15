@@ -4,33 +4,14 @@
 
 package frc.robot;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.nio.ByteBuffer;
-
-import com.ctre.phoenix.motorcontrol.NeutralMode;
-
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.I2C.Port;
-import edu.wpi.first.wpilibj.SerialPort.Parity;
-import edu.wpi.first.wpilibj.SerialPort.StopBits;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import frc.robot.Constants.DriveTrainConstants;
-import frc.robot.Constants.ExtendConstants;
-import frc.robot.Constants.IntakeConstants;
-import frc.robot.Constants.PivotConstants;
-import frc.robot.subsystems.DrivetrainSubsystem;
-import frc.robot.subsystems.ExtendSubsystem;
-import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.PivotSubsystem;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -44,6 +25,7 @@ import frc.robot.subsystems.PivotSubsystem;
 public class Robot extends TimedRobot {
   private SerialPort arduino;
   private Timer timer;
+  private boolean arduinoStatus;
 
   private byte[] colorSelected;
   private SendableChooser<byte[]> colorChooser = new SendableChooser<>();
@@ -53,7 +35,7 @@ public class Robot extends TimedRobot {
   private byte[] Cone = {0x3};
   private byte[] Cube = {0x4};
   private byte[] RGB = {0x5};
-  
+
   private Command m_autonomousCommand;
   private RobotContainer robotContainer;
 
@@ -64,6 +46,10 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+
+    robotContainer = new RobotContainer();
+
+    Shuffleboard.selectTab("Arm Data");
     colorChooser.setDefaultOption("Startup", Startup);
     colorChooser.addOption("Blue Alliance", BlueAlliance);
     colorChooser.addOption("Red Alliance", RedAlliance);
@@ -71,29 +57,40 @@ public class Robot extends TimedRobot {
     colorChooser.addOption("Cube", Cube);
     colorChooser.addOption("RGB", RGB);
     SmartDashboard.putData(colorChooser);
+    
     try {
       arduino = new SerialPort(9600, SerialPort.Port.kUSB);
       System.out.println("Connected!");
+      arduinoStatus = true;
     } catch (Exception e) {
       System.out.println("Failed poopy poop");
+      arduinoStatus = false;
     }
+
     timer = new Timer();
     timer.start();
     //arduino.write(Startup, 1);
+
+    
+  
   }
 
   @Override
   public void robotPeriodic() {
     colorSelected = colorChooser.getSelected();
+    if(arduinoStatus){
     if(timer.get() > .5){
-      System.out.println("Wrote to Arduino");
+      //System.out.println("Wrote to Arduino");
       arduino.write(colorSelected, 1);
       if(arduino.getBytesReceived() > 0){
         System.out.println(colorSelected);
       }
       timer.reset();
     }
-CommandScheduler.getInstance().run();
+  }
+
+
+    CommandScheduler.getInstance().run();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

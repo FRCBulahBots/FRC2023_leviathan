@@ -7,14 +7,15 @@ public final class ExtendConstants {
     // #endregion
 
     // #region PID Values
-    public static double PID_P = 0.2f;
+    public static double PID_P = 0.255f;
     public static double PID_I = 0.025f;
     public static double PID_D = 0.0f;
     // #endregion
 
     // #region Positions;
     public static double in = 0;
-    public static double sub = 20;
-    public static double out = 135;
+    public static double sub = -20;
+    public static double ground = -35;
+    public static double out = -123;
     // #endregion
 }

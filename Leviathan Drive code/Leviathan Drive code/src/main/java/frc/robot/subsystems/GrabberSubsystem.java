@@ -39,8 +39,8 @@ public class GrabberSubsystem extends ProfiledPIDSubsystem {
   public void useOutput(double output, TrapezoidProfile.State setpoint) {
     // TODO: Add a feedforward to the PID output potentially
    motor.set(output);
-   SmartDashboard.putNumber("Grab Output Value", output);
-   SmartDashboard.putNumber("Grab Setpoint", setpoint.position);
+  //  SmartDashboard.putNumber("Grab Output Value", output);
+  //  SmartDashboard.putNumber("Grab Setpoint", setpoint.position);
   }
 
   @Override

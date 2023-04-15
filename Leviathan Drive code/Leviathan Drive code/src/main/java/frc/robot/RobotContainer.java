@@ -7,184 +7,131 @@ package frc.robot;
 import frc.robot.Constants.ExtendConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.PivotConstants;
-import frc.robot.commands.ConeMobility;
-import frc.robot.commands.JoystickToDrive;
-import frc.robot.commands.JoystickToDriveGyro;
+import frc.robot.commands.*;
+import frc.robot.commands.Auton_Commands.*;
+
+// import frc.robot.commands.ResetExtend;
+
 import frc.robot.subsystems.DrivetrainSubsystem;
 import frc.robot.subsystems.ExtendSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.PivotSubsystem;
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.wpilibj.shuffleboard.SendableCameraWrapper;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-/**
- * This class is where the bulk of the robot should be declared. Since
- * Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in
- * the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of
- * the robot (including
- * subsystems, commands, and trigger mappings) should be declared here.
- */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   public final PivotSubsystem pivot = new PivotSubsystem();
   public final ExtendSubsystem extend = new ExtendSubsystem();
   public final IntakeSubsystem intake = new IntakeSubsystem();
   public final DrivetrainSubsystem drive = new DrivetrainSubsystem();
+
   private final Command ConeMobilityCommand = new ConeMobility(intake, drive, extend, pivot);
-  private final Command ConeCommand = new ConeMobility(intake, drive, extend, pivot);
+  private final Command ConeCommand = new Cone(intake, drive, extend, pivot);
+  private final Command CubeMobilityCommand = new CubeMobility(intake, drive, extend, pivot);
+  private final Command CubeCommand = new Cube(intake, drive, extend, pivot);
   private final Command NothingCommand = null;
+  private final Command Moving2FeetCommand = new JoysticktoEncodedDrive(drive, 24, false);
+
+  // private final Command
 
   SendableChooser<Command> autoChooser = new SendableChooser<>();
-  
-  
+
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController = new CommandXboxController(0);
-  
-  /**
-   * The container for the robot. Contains subsystems, OI devices, and commands.
-   */
+
   public RobotContainer() {
-    autoChooser.setDefaultOption("Cone + Mobility", ConeMobilityCommand);
-    autoChooser.addOption("Cone", ConeCommand);
+    autoChooser.setDefaultOption("Cone", ConeCommand);
+    autoChooser.addOption("Cone + Mobility", ConeMobilityCommand);
+    autoChooser.addOption("Cube", CubeCommand);
+    autoChooser.addOption("Cube + Mobility", CubeMobilityCommand);
     autoChooser.addOption("Nothing", NothingCommand);
-    SmartDashboard.putData(autoChooser);
+    Shuffleboard.getTab("Auton").add(autoChooser);
+
     // Configure the trigger bindings
     configureBindings();
   }
 
-  /**
-   * Use this method to define your trigger->command mappings. Triggers can be
-   * created via the
-   * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with
-   * an arbitrary
-   * predicate, or via the named factories in {@link
-   * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for
-   * {@link
-   * CommandXboxController
-   * Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
-   * PS4} controllers or
-   * {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
-   * joysticks}.
-   */
   private void configureBindings() {
-    CameraServer.startAutomaticCapture(0);
-    CameraServer.startAutomaticCapture(1);
+    CameraServer.startAutomaticCapture();
+    // new ResetExtend(extend).schedule();
+
     // Drive
     drive.setDefaultCommand(new JoystickToDrive(drive, m_driverController, 1, 4));
     m_driverController.povUp().onTrue(new InstantCommand(() -> drive.invertDriveType()));
 
-    m_driverController.povLeft().toggleOnTrue(new StartEndCommand(() -> drive.setDriveMax(0.5), () -> drive.setDriveMax(1.0), drive) );
+    m_driverController.start().onTrue(new InstantCommand(() -> drive.resetEncoders()));
+
+
+//    m_driverController.povLeft()
+//        .toggleOnTrue(new StartEndCommand(() -> drive.setDriveMax(0.5), () -> drive.setDriveMax(1.0), drive));
     // m_driverController.povUp().onFalse(new InstantCommand(() ->
     // drive.setDriveType(NeutralMode.Coast)));
+    
+    
     // Pivot Commands
 
-    //Reset pivot and extend
+    // Reset pivot and extend
     m_driverController
         .a()
         .onTrue(
-            Commands.runOnce(
-                () -> {
-                  extend.setGoal(ExtendConstants.in);
-                  extend.enable();
-                },
-                extend).alongWith(
-                    new SequentialCommandGroup(new WaitCommand(0.6),
-                        Commands.runOnce(
-                            () -> {
-                              pivot.setGoal(PivotConstants.lowNode);
-                              pivot.enable();
-                            },
-                            pivot))));
+            new ExtendCommand(extend, ExtendConstants.in).alongWith(
+                new SequentialCommandGroup(new WaitCommand(0.6),
+                    new PivotCommand(pivot, PivotConstants.home))));
 
-    //Substation pivot and extend
+    // Substation pivot and extend
     m_driverController
         .b()
         .onTrue(
-            Commands.runOnce(
-                () -> {
-                  pivot.setGoal(PivotConstants.substation);
-                  pivot.enable();
-                },
-                pivot).alongWith(
-                    new SequentialCommandGroup(new WaitCommand(0.5),
-                        Commands.runOnce(
-                            () -> {
-                              extend.setGoal(ExtendConstants.sub);
-                              extend.enable();
-                            },
-                            extend))));
+            new PivotCommand(pivot, PivotConstants.substation).alongWith(
+                new SequentialCommandGroup(new WaitCommand(0.5),
+                    new ExtendCommand(extend, ExtendConstants.sub))));
 
-    //Middle node pivot and extend
+    // Middle node pivot and extend
     m_driverController
         .x()
         .onTrue(
-            Commands.runOnce(
-                () -> {
-                  pivot.setGoal(PivotConstants.middleNode);
-                  pivot.enable();
-                },
-                pivot).alongWith(
-                    new SequentialCommandGroup(new WaitCommand(.6),
-                        Commands.runOnce(
-                            () -> {
-                              extend.setGoal(ExtendConstants.out);
-                              extend.enable();
-                            },
-                            extend))));
+            new PivotCommand(pivot, PivotConstants.middleNode).alongWith(
+                new SequentialCommandGroup(new WaitCommand(0.6),
+                    new ExtendCommand(extend, ExtendConstants.out))));
 
     m_driverController
         .y()
         .onTrue(
-            Commands.runOnce(
-                () -> {
-                  pivot.setGoal(PivotConstants.clearBumpers);
-                  pivot.enable();
-                },
-                pivot));
-   //
+            new GroundPickupCommand(intake, extend, pivot)  
+        );
+
+m_driverController
+    .povLeft()
+    .onTrue(
+            new ExtendCommand(extend, ExtendConstants.sub).alongWith(
+                new SequentialCommandGroup(new WaitCommand(0.6),
+                    new PivotCommand(pivot, PivotConstants.clearBumpers))));
+    
     m_driverController
         .leftBumper()
         .onTrue(
-            Commands.runOnce(
-                () -> {
-                  extend.setGoal(ExtendConstants.in);
-                  extend.enable();
-                },
-                extend));
+            new ExtendCommand(extend, ExtendConstants.in));
+
     m_driverController
         .povDown()
         .onTrue(
-            Commands.runOnce(
-                () -> {
-                  extend.setGoal(ExtendConstants.sub);
-                  extend.enable();
-                },
-                extend));
+            new ExtendCommand(extend, ExtendConstants.sub));
 
     m_driverController
         .rightBumper()
         .onTrue(
-            Commands.runOnce(
-                () -> {
-                  extend.setGoal(ExtendConstants.out);
-                  extend.enable();
-                },
-                extend));
+            new ExtendCommand(extend, ExtendConstants.out));
 
-      m_driverController.povRight().onTrue(new JoystickToDriveGyro(drive.getYaw() - 90, drive));
-      m_driverController.povLeft().onTrue(new JoystickToDriveGyro(drive.getYaw() + 90, drive));
+    // m_driverController.povRight().onTrue(new JoystickToDriveGyro(drive.getYaw() - 90, drive));
+    // m_driverController.povLeft().onTrue(new JoystickToDriveGyro(drive.getYaw() + 90, drive));
+   
     // Grabber Commands
     m_driverController.leftTrigger()
         .onTrue(new InstantCommand(() -> intake.setSpeed(IntakeConstants.OUT_SPEED)))
@@ -194,6 +141,8 @@ public class RobotContainer {
         .onTrue(new InstantCommand(() -> intake.setSpeed(IntakeConstants.IN_SPEED)))
         .onFalse(new InstantCommand(() -> intake.setSpeed(IntakeConstants.STOP_SPEED)));
 
+        // new StartEndCommand(() -> intake.setSpeed(IntakeConstants.IN_SPEED), () -> intake.setSpeed(IntakeConstants.STOP_SPEED), intake);
+        // new StartEndCommand(() -> intake.setSpeed(IntakeConstants.OUT_SPEED), () -> intake.setSpeed(IntakeConstants.STOP_SPEED), intake);
   }
 
   /**
@@ -203,6 +152,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return autoChooser.getSelected();
+    return Moving2FeetCommand;//autoChooser.getSelected(); 
+
   }
 }

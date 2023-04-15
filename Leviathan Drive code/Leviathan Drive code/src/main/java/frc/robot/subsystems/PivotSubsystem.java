@@ -6,6 +6,9 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.ProfiledPIDSubsystem;
 import frc.robot.Constants.CANIDConstants;
@@ -15,8 +18,13 @@ public class PivotSubsystem extends ProfiledPIDSubsystem {
   private final CANSparkMax motor = new CANSparkMax(CANIDConstants.ARM_PIVOT, MotorType.kBrushless);
   double squaredOutput, finalOutput;
 
+  ShuffleboardTab pivotTab = Shuffleboard.getTab("Arm Data");
+  GenericEntry pivotEncoderValue = pivotTab.addPersistent("Pivot Encoder Value", 0).getEntry();
+  
+
   public PivotSubsystem() {
-    // We MUST call the super to supply the configured ProfiledPIDController to the base class.
+    // We MUST call the super to supply the configured ProfiledPIDController to the
+    // base class.
     super(
         new ProfiledPIDController(
             PivotConstants.PID_P,
@@ -27,39 +35,46 @@ public class PivotSubsystem extends ProfiledPIDSubsystem {
                 PivotConstants.MAX_ACCEL)),
         0);
 
-    // Brake mode is a safer here than Coast, as it reduces strain on control loop to maintain constant position,
-    // and in the event the robot is disabled, the arm wont come crashing down so fast.
+    // Brake mode is a safer here than Coast, as it reduces strain on control loop
+    // to maintain constant position,
+    // and in the event the robot is disabled, the arm wont come crashing down so
+    // fast.
     motor.setIdleMode(IdleMode.kBrake);
     // Start arm at rest in neutral position
-    // TODO: Should we have a defaulted position we should set as goal? we probably need a real encoder on the pivot point before this.
-    //setGoal(ArmConstants.kArmOffsetRads);
+    // TODO: Should we have a defaulted position we should set as goal? we probably
+    // need a real encoder on the pivot point before this.
+    // setGoal(ArmConstants.kArmOffsetRads);
   }
 
- 
+  @Override
+  public void periodic() {
+    super.periodic();
+    pivotEncoderValue.setDouble(getMeasurement());
+  }
 
   @Override
   public void useOutput(double output, TrapezoidProfile.State setpoint) {
 
-    //exponential output for the arm
+    // exponential output for the arm
     squaredOutput = Math.pow(output, 2);
-    if (output < 0){
+    if (output < 0) {
       squaredOutput = -squaredOutput;
     }
-    finalOutput = clamp(squaredOutput,-.5,.5);
-    
+    finalOutput = clamp(squaredOutput, -.5, .5);
+
     motor.set(output);
 
     // motor.set(output);
 
-    SmartDashboard.putNumber("Pivot Motor Output", motor.get());
-    SmartDashboard.putNumber("Pivot Encoder Value", motor.getEncoder().getPosition());
-
+    // SmartDashboard.putNumber("Pivot Motor Output", motor.get());
+    // SmartDashboard.putNumber("Pivot Encoder Value",
+    // motor.getEncoder().getPosition());
   }
 
   @Override
   public double getMeasurement() {
-    double pivotPosition = motor.getEncoder().getPosition();
-    return pivotPosition;
+    return motor.getEncoder().getPosition();
+
   }
 
   private static double clamp(double val, double min, double max) {

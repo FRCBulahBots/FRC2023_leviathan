@@ -13,9 +13,10 @@ public final class PivotConstants {
     // #endregion
 
     // #region Positions
-    public static double clearBumpers = -77;
-    public static int substation = -57;
+    public static double clearBumpers = -18;
+    public static double groundUp = -30;
+    public static double substation = -60;
     public static double middleNode = -50;
-    public static int lowNode = 0;
+    public static double home = 0;
     // #endregion
 }
